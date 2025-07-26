@@ -7,19 +7,17 @@ from dotenv import load_dotenv
 import json
 import google.generativeai as genai 
 import os
-from flask_cors import CORS  # Add CORS support
+from flask_cors import CORS
 
 app = Flask(__name__)
-CORS(app)  # Enable CORS for all routes
+CORS(app)
 load_dotenv()
 
-# Load API keys from environment variables
 claude_api_key = os.getenv("CLAUDE_API_KEY")
 openai_api_key = os.getenv("OPENAI_API_KEY")
 gemini_api_key = os.getenv("GEMINI_API_KEY")
 deepseek_api_key = os.getenv("DEEPSEEK_API_KEY")
 
-# Configure logging
 logging.basicConfig(level=logging.INFO)
 
 def main_llm(prompt):
@@ -48,7 +46,6 @@ def main_llm(prompt):
 def claude_llm(messages):
     client = anthropic.Anthropic(api_key=claude_api_key)
 
-    # Updated system message for Claude - simplified to avoid JSON parsing issues
     system_message = f"""
     You are a highly intelligent AI assistant named Claude. Your main goal is to assist with code generation and general inquiries.
     Default to Python for code examples unless another language is requested.
@@ -129,7 +126,7 @@ def openai_llm(messages):
         return json.loads(json.dumps({"Error": f"An error occurred: {e}"}))
 
 def gemini_llm(messages):
-    """Handle image processing related tasks using Gemini and DALL-E"""
+    # Dall-E Image-Handle.
     try:
         genai.configure(api_key=gemini_api_key)
         
@@ -167,11 +164,10 @@ def gemini_llm(messages):
         return {"Error": str(e), "Response": "I encountered an error processing your image request."}
 
 def clean_json_text(text):
-    """Clean JSON text by removing code block markers"""
     return re.sub(r"^```json|```$", "", text.strip(), flags=re.MULTILINE).strip()
 
 def gemini_llama_llm(prompt):
-    """Handle logical thinking related questions using Gemini"""
+    """Handle logical thinking using Gemini"""
     try:
         genai.configure(api_key=gemini_api_key)
 
@@ -208,7 +204,6 @@ def gemini_llama_llm(prompt):
 
 @app.route('/api/chat', methods=['POST'])
 def chat():
-    """Main API endpoint for handling chat requests"""
     data = request.json
     user_input = data.get('prompt', '')
     requested_model = data.get('model', '')
@@ -249,11 +244,9 @@ def chat():
                 result = gemini_llama_llm(user_input)
                 model_used = "llama"
             else:
-                # Default to Claude for anything else
                 result = claude_llm(user_input)
                 model_used = "claude"
     
-    # Convert result to string format for response
     response_text = ""
     if isinstance(result, dict):
         if "task" in result and "response" in result:
@@ -275,17 +268,15 @@ def chat():
     else:
         response_text = str(result)
     
-    # Add model info to the response
     response = {
         'response': response_text,
-        'model': model_used  # Ensure this is always set
+        'model': model_used
     }
     
     return jsonify(response)
 
 @app.route('/api/predict', methods=['POST'])
 def predict():
-    """Legacy endpoint for compatibility"""
     return chat()
 
 @app.route('/health', methods=['GET'])
@@ -297,5 +288,5 @@ CORS(app, origins=["http://localhost:3000", "http://127.0.0.1:3000", "https://ai
 
 
 if _name_ == '_main_':
-    port = int(os.environ.get('PORT', 5000))  # Use Render's port or fallback to 5000
+    port = int(os.environ.get('PORT', 5000))
     app.run(host='0.0.0.0', port=port)
