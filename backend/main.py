@@ -167,7 +167,7 @@ def clean_json_text(text):
     return re.sub(r"^```json|```$", "", text.strip(), flags=re.MULTILINE).strip()
 
 def gemini_llama_llm(prompt):
-    """Handle logical thinking using Gemini"""
+    # Logical thinking with Gemini
     try:
         genai.configure(api_key=gemini_api_key)
 
